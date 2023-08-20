@@ -31,7 +31,7 @@ model = load_model(CONFIG_PATH, WEIGHTS_PATH)
 # model = model.to(device)
 
 # set text prompt
-TEXT_PROMPT = "cell phone . mobile phone . camera . "
+TEXT_PROMPT = "cell phone. mobile phone. camera. taking photos. "
 # TEXT_PROMPT = "person with glasses. remote controller. "
 
 # set box and text threshold values
@@ -47,13 +47,15 @@ osc_client = udp_client.SimpleUDPClient(OSC_IP, OSC_PORT)
 
 transform = T.Compose(
     [
-        T.RandomResize([500], max_size=600),
+        T.RandomResize([500], max_size=800),
         T.ToTensor(),
         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]
 )
 
 skip = 0
+last_hide = None
+
 while True:
     skip +=1
     skip %=3
@@ -67,6 +69,8 @@ while True:
     image_transformed, _ = transform(image_source, None)
     # image_transformed = image_transformed.to(device)
 
+
+    
     # predict boxes, logits, phrases
     boxes, logits, phrases = predict(
         model=model,
@@ -80,16 +84,27 @@ while True:
     # annotate the image
     annotated_frame = annotate(
         image_source=frame, boxes=boxes, logits=logits, phrases=phrases)
-    if not phrases:
-        print("empty, show the drawing")
-        osc_client.send_message("/hide",0)
+
+    should_hide = False
 
     for item in phrases:
         print(item)
-        if "phone" or "camera" in item:
-            print("Hide the drawing")
-            osc_client.send_message("/hide",1)
+        if "phone" in item or  "camera" in item:
+            should_hide = True
+            last_hide = 0
         
+    if not phrases:
+        should_hide = False
+
+    if should_hide == 1 and last_hide != 1:
+        print("Hide the drawing")
+        osc_client.send_message("/hide",1)
+        last_hide = 1
+    elif not should_hide and last_hide != 0:
+        print("Show the drawing")
+        osc_client.send_message("/hide",0)
+        last_hide = 0
+
 
     # display the output
     out_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
