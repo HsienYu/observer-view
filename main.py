@@ -58,8 +58,7 @@ last_hide = None
 
 while True:
     skip +=1
-    skip %=3
-    if skip != 0:
+    if skip % 3 != 0:
         continue
     ret, frame = cap.read()
     # create a transform function by applying 3 image transaformations
@@ -85,16 +84,7 @@ while True:
     annotated_frame = annotate(
         image_source=frame, boxes=boxes, logits=logits, phrases=phrases)
 
-    should_hide = False
-
-    for item in phrases:
-        print(item)
-        if "phone" in item or  "camera" in item:
-            should_hide = True
-            last_hide = 0
-        
-    if not phrases:
-        should_hide = False
+    should_hide = any("phone" in item or  "camera" in item for item in phrases)
 
     if should_hide == 1 and last_hide != 1:
         print("Hide the drawing")
