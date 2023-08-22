@@ -58,7 +58,7 @@ transform = T.Compose(
 skip = 0
 last_hide = None
 last_hide_time = None
-
+should_hide = False
 while True:
     skip +=1
     if skip % 3 != 0:
@@ -90,12 +90,12 @@ while True:
     should_hide = any("phone" in item or  "camera" in item for item in phrases)
     if should_hide:
         last_hide_time = time.time()
-        
+
     if should_hide == 1 and last_hide != 1 :
         print("Hide the drawing")
         osc_client.send_message("/hide",1)
         last_hide = 1
-    elif not should_hide and last_hide != 0 and last_hide_time is not None and time.time() - last_hide_time >= 10:
+    elif not should_hide and last_hide != 0 and last_hide_time is not None and time.time() - last_hide_time >= 5:
         print("Show the drawing")
         osc_client.send_message("/hide",0)
         last_hide = 0
