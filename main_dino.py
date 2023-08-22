@@ -7,6 +7,7 @@ from PIL import Image
 import groundingdino.datasets.transforms as T
 from groundingdino.util.inference import load_model, load_image, predict, annotate
 from pythonosc import udp_client
+import time
 
 # os.environ['CUDA_HOME'] = 'C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.7'
 # os.environ["CUDA_HOME"] = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.7"
@@ -32,15 +33,15 @@ model = load_model(CONFIG_PATH, WEIGHTS_PATH)
 # model = model.to(device)
 
 # set text prompt
-TEXT_PROMPT = "cell phone. mobile phone. camera. taking photos. "
+TEXT_PROMPT = "cell phone . camera ."
 # TEXT_PROMPT = "person with glasses. remote controller. "
 
 # set box and text threshold values
-BOX_TRESHOLD = 0.30
+BOX_TRESHOLD = 0.35
 TEXT_TRESHOLD = 0.25
 
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 OSC_IP = "10.0.0.40"
 OSC_PORT = 12345
@@ -48,7 +49,7 @@ osc_client = udp_client.SimpleUDPClient(OSC_IP, OSC_PORT)
 
 transform = T.Compose(
     [
-        T.RandomResize([500], max_size=800),
+        T.RandomResize([800], max_size=1333),
         T.ToTensor(),
         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]
@@ -56,10 +57,11 @@ transform = T.Compose(
 
 skip = 0
 last_hide = None
+last_hide_time = None
 
 while True:
     skip +=1
-    if skip % 1 != 0:
+    if skip % 3 != 0:
         continue
     ret, frame = cap.read()
     # create a transform function by applying 3 image transaformations
@@ -85,16 +87,19 @@ while True:
     annotated_frame = annotate(
         image_source=frame, boxes=boxes, logits=logits, phrases=phrases)
 
-    should_hide = any("phone" in item or  "camera" in item or "photos" in item for item in phrases)
-
-    if should_hide == 1 and last_hide != 1:
+    should_hide = any("phone" in item or  "camera" in item for item in phrases)
+    if should_hide:
+        last_hide_time = time.time()
+        
+    if should_hide == 1 and last_hide != 1 :
         print("Hide the drawing")
         osc_client.send_message("/hide",1)
         last_hide = 1
-    elif not should_hide and last_hide != 0:
+    elif not should_hide and last_hide != 0 and last_hide_time is not None and time.time() - last_hide_time >= 10:
         print("Show the drawing")
         osc_client.send_message("/hide",0)
         last_hide = 0
+        last_hide_time = None
 
 
     # display the output
