@@ -19,7 +19,7 @@ from utils.download_weights import download
 from pythonosc import udp_client
 
 
-OSC_IP = "10.0.0.40"
+OSC_IP = "192.168.168.111"
 OSC_PORT = 12345
 osc_client = udp_client.SimpleUDPClient(OSC_IP, OSC_PORT)
 
@@ -78,6 +78,8 @@ def detect(save_img=False):
    
     #last_hide the variable
     last_hide = None
+    last_hide_time = None
+    should_hide = False
 
     for path, img, im0s, vid_cap in dataset:
         img = torch.from_numpy(img).to(device)
@@ -148,15 +150,18 @@ def detect(save_img=False):
             phrases =s.split(",")
             should_hide = any("phone" in item or "camera" in item for item in phrases)
             # print(f'{should_hide}')
+            if should_hide:
+                last_hide_time = time.time()
 
             if should_hide == 1 and last_hide != 1:
                 print(f'Hide the drawing')
                 osc_client.send_message("/hide",1)
                 last_hide = 1
-            elif not should_hide and last_hide != 0:
+            elif not should_hide and last_hide != 0 and last_hide_time is not None and time.time() - last_hide_time >= 5:
                 print(f'Show the drawing')
                 osc_client.send_message("/hide",0)
                 last_hide = 0
+                last_hide_time = None
 
             # Stream results
             if view_img:

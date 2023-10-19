@@ -81,7 +81,7 @@ osc_dispatcher.map("/hide", draw_with_osc)
 osc_dispatcher.map("/erase", draw_with_osc)
 
 # Create an OSC server on a separate thread
-osc_server = ThreadingOSCUDPServer(("10.0.0.37", 12345), osc_dispatcher)
+osc_server = ThreadingOSCUDPServer(("192.168.168.111", 12345), osc_dispatcher)
 server_thread = threading.Thread(target=osc_server.serve_forever)
 server_thread.daemon = True
 server_thread.start()
@@ -104,7 +104,7 @@ while True:
                 if fullscreen:
                     screen = pygame.display.set_mode((window_width, window_height), pygame.FULLSCREEN)
                 else:
-                    screen = pygame.display.set_mode((1024, 1024))
+                    screen = pygame.display.set_mode((800, 800))
                 pygame.display.set_caption("Mouse Path Drawing")
             elif event.key == pygame.K_c:  # Press 'c' key to hide the drawing
                 hide_drawing = not hide_drawing

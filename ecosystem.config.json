@@ -1,0 +1,12 @@
+{
+    "apps": [{
+        "name": "dino",
+        "script": "C:/Users/Folico/Documents/observer-view/GroundingDINO/main_dino.py",
+        "args": [""],
+        "wait_ready": true,
+        "autorestart": true,
+        "max_restarts": 1,
+        "interpreter" : "C:/Users/Folico/anaconda3/envs/ML/python.exe",
+        "interpreter_args": "run python3"
+    }]
+}
